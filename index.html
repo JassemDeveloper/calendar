@@ -131,7 +131,7 @@ span.shift-super.shift-D:before{
 select#shiftType {
     font-size: 20px;
     padding: 12px;
-    width: 257px;
+    width: 100vh;
     border: solid #7474a3;
 }
 
@@ -144,20 +144,20 @@ select#shiftType {
 <body>
 <div class="container-fluid">
 <div class="row">
-<div class="year-selection col- text-center"></div>
+<div class="year-selection col-sm-12 col-lg-12 col-md-12 text-center"></div>
 <div class="google-access">
     <!--Add buttons to initiate auth sequence and sign out-->
     <div class="row">
-    <button id="authorize_button" class="col-1 btn btn-primary p-2 m-1" onclick="APP.handleAuthClick()">Authorize Export </button>
-    <button id="exportTo" class="col-1 btn btn-primary p-2 m-1">Start Exporting</button>
-      <select class='col-1 m-1'  id='shiftType'>
+    <button id="authorize_button" class="btn btn-primary p-2 m-1 col-sm-12 col-lg-3 col-md-3" onclick="APP.handleAuthClick()">Authorize Export </button>
+    <button id="exportTo" class="col-sm-12 col-lg-4 col-md-4 btn btn-primary p-2 m-1">Start Exporting</button>
+      <select class='col-sm-12 col-lg-4 col-md-4 m-1'  id='shiftType'>
       <option value="" selected> Please select your shift</option>
       <option value="A">A</option>
       <option value="B">B</option>
       <option value="C">C</option>
       <option value="D">D</option>
     </select>
-    <button id="signout_button" class="btn btn-primary col-1 m-1" onclick="APP.handleSignoutClick()">Sign Out</button>
+    <button id="signout_button" class="col-sm-12 col-lg-4 col-md-4 btn btn-primary m-1" onclick="APP.handleSignoutClick()">Sign Out</button>
   </div>
 </div>
 <div class="progress progress-bar-height">
