@@ -1,1 +1,206 @@
-<h1>Hello </h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <meta name="google-signin-client_id" content="61736859691-5fmjquh8ud2skc1gvgfqogjb43ueh44a.apps.googleusercontent.com">
+    <link href="bootstrap.min.css" rel="stylesheet">
+
+    <title>Shift Schedule Manager</title>
+
+    <style>
+
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+span.rotate-text {
+    transform: rotate(33deg);
+    display: block;
+}
+
+
+.group-name {
+    position: absolute;
+    left: -47px;
+    width: 51px;
+    text-align: center;
+}
+
+.members ul {
+    position: relative;
+}
+span.shift-super:before {
+    content: '\27F3';
+    position: absolute;
+    left: -50px;
+    font-size: 48px;
+    font-weight: bold;
+    top: -25px;
+}
+span.shift-super.shift-A:before{
+  color: #00768B;
+}
+span.shift-super.shift-B:before{
+  color: #1EA0A5;
+}
+span.shift-super.shift-C:before{
+  color: #004C48;
+}
+span.shift-super.shift-D:before{
+  color: #B44237;
+}
+
+.closer {
+    background: lightblue;
+    display: inline;
+    padding: 2px 20px;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+.members h5 {
+    text-align: center;
+    font-size: 25px;
+}
+.members ul li span {
+    background: red;
+    padding: 5px;
+    margin-bottom: 6px;
+    display: block;
+    color: white;
+    font-size: 18px;
+}
+.members ul li  {
+ list-style: none;
+}
+.members ul li ul {
+    margin-left: 10px;
+}
+
+.members {
+    display: flex;
+    justify-content: space-evenly;
+}
+.shift-A,.day-off-A{
+  background: #00768B !important;
+  color: white;
+}
+.shift-B,.day-off-B{
+  background: #1EA0A5 !important;
+  color: white;
+}
+.shift-C,.day-off-C{
+  background: #004C48 !important;
+  color: white;
+}
+.shift-D,.day-off-D{
+  background: #B44237 !important;
+  color: white;
+}
+
+
+.R{
+  background: #FDB121 !important;
+  color:white  !important;
+}
+.H{
+  background: #00DFFF !important;
+  color:white  !important;
+}
+.N{
+  background: #993299 !important;
+  color:white  !important;
+}
+.L{
+  background: #407294 !important;
+  color:white  !important;
+}
+.ramadan{
+  background: #20B2AA !important;
+  color:white  !important;
+}
+
+.HS{
+  background: red;
+}
+
+select#shiftType {
+    font-size: 20px;
+    padding: 12px;
+    width: 257px;
+    border: solid #7474a3;
+}
+
+.progress-bar-height{
+  height: 50px;
+}
+
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+<div class="row">
+<div class="year-selection col- text-center"></div>
+<div class="google-access">
+    <!--Add buttons to initiate auth sequence and sign out-->
+    <div class="row">
+    <button id="authorize_button" class="col-1 btn btn-primary p-2 m-1" onclick="APP.handleAuthClick()">Authorize Export </button>
+    <button id="exportTo" class="col-1 btn btn-primary p-2 m-1">Start Exporting</button>
+      <select class='col-1 m-1'  id='shiftType'>
+      <option value="" selected> Please select your shift</option>
+      <option value="A">A</option>
+      <option value="B">B</option>
+      <option value="C">C</option>
+      <option value="D">D</option>
+    </select>
+    <button id="signout_button" class="btn btn-primary col-1 m-1" onclick="APP.handleSignoutClick()">Sign Out</button>
+  </div>
+</div>
+<div class="progress progress-bar-height">
+  <div class="progress-title"><h6>Please wait we will start shortly</h6></div>
+  <div class="progress-bar progress-bar-success progress-bar-track" role="progressbar" aria-valuenow="40"
+  aria-valuemin="0" aria-valuemax="100" style="width:0%">
+    0%
+  </div>
+</div>
+</div>
+    <div>
+    <!-- <span v-on:click="tableLayout">Table Layout</span>-->
+    <!--<span v-on:click="rowsLayout"> Rows Layout</span> -->
+    <img src="pdf.png" width="30" height="30"  id="generatePDF">
+    <div id="google-signin-button" ></div>
+    <!--Add buttons to initiate auth sequence and sign out-->
+    <!-- <span v-on:click="showMeAlert"> A</span>-->
+    <!--<img v-if="layout == 'row'" v-on:click="showMemebers" src="src/assets/img/members.png" width="30" height="30">-->
+    </div>
+    <hr>
+    <div>
+        <div class="calendar-container">
+          <div class="generated-result"></div>
+            <div class="categories row text-center mb-2">
+                <span class="col-sm-3 col-md-3 col-lg-3 p-3 ramadan">Ramadan</span>
+                <span class="col-sm-2 col-md-2 col-lg-2 p-3 R">Rescheduled days off</span>
+                <span class="col-sm-2 col-md-2 col-lg-2 p-3 N">National/Founding Day</span>
+                <span class="col-sm-2 col-md-2 col-lg-2 p-3 H">Holidays</span>
+                <span class="col-sm-3 col-md-3 col-lg-3 p-3 L">Weekends</span>
+            </div>
+        </div>
+        </div>
+
+</div>
+
+<script src="jquery-3.7.1.min.js"></script>
+<script src="common.js"></script>
+<script src="pdfmake.min.js"></script>
+<script src="jspdf.min.js"></script>
+<script src="vfs_fonts.js"></script>
+<script src="bootstrap.bundle.min.js"></script>
+<script src="app.js"></script>
+<script async defer src="https://apis.google.com/js/api.js" onload="APP.gapiLoaded()"></script>
+<script async defer src="https://accounts.google.com/gsi/client" onload="APP.gisLoaded()"></script>
+</body>
+</html>
