@@ -1598,8 +1598,8 @@ async function insertEvents(shiftSchedule){
       console.log(count);
       count +=1;
       updateProgressBar(count,shiftSchedule.length);
-    },300+delay);
-    delay +=100;
+    },500+delay);
+    delay +=200;
     
     /*
     await gapi.client.calendar.events.insert({
