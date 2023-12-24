@@ -1,7 +1,30 @@
 const APP=(()=>{
 let doc=window.document;
 let currentYearGl=new Date().getFullYear();
+/*
+let nextYearBT=doc.querySelector('.nextYear');
+let prevYearBT=doc.querySelector('.prevYear');
+nextYearBT.setAttribute('disabled',false);
+prevYearBT.setAttribute('disabled',false);
+*/
 
+/*
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
+import CalendarListComponenet from './CalendarListComponenet.vue';
+*/
+// TODO(developer): Set to client ID and API key from the Developer Console
+const CLIENT_ID = '61736859691-5fmjquh8ud2skc1gvgfqogjb43ueh44a.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyAK8SHAt3jUwMrywv55SaRf8JRHOhwABR0';
+// Discovery doc URL for APIs used by the quickstart
+const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
+
+// Authorization scopes required by the API; multiple scopes can be
+// included, separated by spaces.
+const SCOPES = 'https://www.googleapis.com/auth/calendar';
 
 let shiftConfig={
   2022:{
@@ -109,6 +132,211 @@ let shiftConfig={
   
 }
 
+
+
+
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
+
+
+
+document.getElementById('signout_button').style.display = 'none';
+document.getElementById('exportTo').style.display = 'none';
+document.getElementById('shiftType').style.display = 'none';
+
+
+/**
+ * Callback after api.js is loaded.
+ */
+
+let gapiLoaded = function () {
+  gapi.load('client', initializeGapiClient);
+}
+
+/**
+ * Callback after the API client is loaded. Loads the
+ * discovery doc to initialize the API.
+ */
+async function initializeGapiClient() {
+  await gapi.client.init({
+    apiKey: API_KEY,
+    discoveryDocs: [DISCOVERY_DOC],
+  });
+  gapiInited = true;
+  maybeEnableButtons();
+}
+
+/**
+ * Callback after Google Identity Services are loaded.
+ */
+let  gisLoaded=function() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: '', // defined later
+  });
+  gisInited = true;
+  maybeEnableButtons();
+}
+
+function handleExportButton(){
+  let shiftType=document.querySelector('#shiftType').value;
+  document.querySelector('#shiftType').addEventListener("change",function(el){
+    shiftType=el.target.value;
+  });
+  document.querySelector('#exportTo').addEventListener("click",function(){
+  if(shiftType.length > 0){
+  
+    let check=confirm("Do you want to export records to Google Calendar?");
+    if(check){
+      exportToGoogleCalendar(shiftType);
+    }
+    }else{
+    alert("please select your shift");
+    }
+  });
+}
+/**
+ * Enables user interaction after all libraries are loaded.
+ */
+function maybeEnableButtons() {
+  if (gapiInited && gisInited) {
+    document.getElementById('authorize_button').style.display='block';
+    doc.querySelector('.progress').style.display='none';
+  }
+}
+
+/**
+ *  Sign in the user upon button click.
+ */
+function handleAuthClick() {
+  tokenClient.callback = async (resp) => {
+    if (resp.error !== undefined) {
+      throw (resp);
+    }
+    document.getElementById('signout_button').style.display = 'block';
+    document.getElementById('exportTo').style.display = 'block';
+    document.getElementById('shiftType').style.display = 'block';
+    document.getElementById('authorize_button').style.display = 'none';
+
+    handleExportButton();
+  };
+
+  if (gapi.client.getToken() === null) {
+    // Prompt the user to select a Google Account and ask for consent to share their data
+    // when establishing a new session.
+    tokenClient.requestAccessToken({prompt: 'consent'});
+  } else {
+    // Skip display of account chooser and consent dialog for an existing session.
+    tokenClient.requestAccessToken({prompt: ''});
+  }
+}
+
+/**
+ *  Sign out the user upon button click.
+ */
+function handleSignoutClick() {
+  const token = gapi.client.getToken();
+  if (token !== null) {
+    google.accounts.oauth2.revoke(token.access_token);
+    gapi.client.setToken('');
+    document.getElementById('content').innerText = '';
+    document.getElementById('authorize_button').innerText = 'Authorize';
+    document.getElementById('signout_button').style.display = 'none';
+  }
+}
+
+let gapi_token_localstorage=function(){
+  let current_token=gapi.client.getToken();
+  let fields=JSON.stringify(current_token);
+  let token_expire_in=addSeconds(current_token.expires_in);
+  localStorage.setItem("token",fields);
+  localStorage.setItem('token_expire',token_expire_in);
+}
+
+let addSeconds=function(seconds){
+  let curr=new Date();
+  curr.setSeconds(curr.getSeconds() + parseInt(seconds));
+  let curr_seconds2=new Date(curr);
+  return curr_seconds2.getTime();
+}
+
+let check_token=function(){
+  let token_obj=JSON.parse(localStorage.getItem('token_expire'));
+  let curr_date_time=new Date().getTime();
+  let token_expiry=new Date(token_obj.expire_in).getTime();
+  if(curr_date_time > token_expiry){
+    return false;
+  }
+
+  return true;
+}
+async function insertEvent(){
+  const event1 ={
+    'summary': 'Google I/O 2022',
+    "colorId":'2',
+    'start': {'date': '2023-12-22'},
+    'end': {'date': '2023-12-22'}
+  };
+
+  const event2 ={
+    'summary': 'Google I/O 2023',
+    "colorId":'4',
+    'start': {'date': '2023-12-24'},
+    'end': {'date': '2023-12-24'}
+  };
+
+  
+  const calendar_name="Shift Schedule";
+  let calendar_id='';
+  const calendar_name_obj={
+      "resource": {
+        "summary": calendar_name
+      }
+    }
+
+  const calendars_list= await gapi.client.calendar.calendarList.list({});
+  let isFound=false;
+
+  calendars_list.result.items.forEach((el)=>{
+    let {summary,id}=el;
+      if(summary == calendar_name){
+        isFound=true;
+        calendar_id=id;
+      }
+  });
+  let added_calendar_id='';
+
+  if(isFound){
+    const delete_calendar= await gapi.client.calendar.calendars.delete({
+        "calendarId": calendar_id
+    });
+    const add_calendar = await gapi.client.calendar.calendars.insert(calendar_name_obj);
+    added_calendar_id=add_calendar.result.id
+  }
+  if(!isFound){
+  const add_calendar = await gapi.client.calendar.calendars.insert(calendar_name_obj);
+  added_calendar_id=add_calendar.result.id
+  }
+
+
+  const request = await gapi.client.calendar.events.insert({
+    'calendarId': added_calendar_id,
+    'resource': event1
+  });
+
+  const request1 = await gapi.client.calendar.events.insert({
+    'calendarId': added_calendar_id,
+    'resource': event2
+  });
+}
+
+
+
+
+
+
 let AIndex,BIndex,CIndex,DIndex=0;
 let ramadanDays=[];
 let holidays=[];
@@ -160,7 +388,7 @@ let yearsSelection=()=>{
   let selectionDiv=doc.querySelector('.year-selection');
   let years=Object.keys(shiftConfig);
   let tempOption=`<div class='row'>
-        <div class='col-3 m-auto'>
+        <div class='col-sm-12 col-lg-4 col-md-4 m-auto'>
         <h3 class='text-center'>Which year would you like to show ?</h3>
         <select class='form-select form-select-lg col-3' id='year-selection'>`;
     years.forEach((el)=>{
@@ -729,11 +957,6 @@ let notesTracker=function(status){
         });
       });
   },1000);
-}
-
-let exportToGoogleCalendar=async function(shiftType){
-  let foundData = prepareCalendarDataForGoogle(currentYearGl,"row",shiftType);
-  await insertEvents(foundData)
 }
 
 let prepareCalendarDataForGoogle=function(year,layout,selectedShift){
@@ -1330,7 +1553,7 @@ let updateProgressBar=function(count,total){
 }
 
 async function insertEvents(shiftSchedule){
-  doc.querySelector('.progress').style.visibility='visible';
+  doc.querySelector('.progress').style.display='block';
   const calendar_name="Shift Schedule";
   let calendar_id='';
   const calendar_name_obj={
@@ -1575,15 +1798,24 @@ color:"white",
 }
 
 
-
+let exportToGoogleCalendar=async function(shiftType){
+  let foundData = prepareCalendarDataForGoogle(currentYearGl,"row",shiftType);
+  await insertEvents(foundData)
+}
 
 yearsSelection();
 generatePDFAction();
 
   return {
     generateFullYearCalendar:generateFullYearCalendar,
-    startProgress:startProgress,
-    exportToGoogleCalendar:exportToGoogleCalendar
+    gapiLoaded:gapiLoaded,
+    gisLoaded:gisLoaded,
+    handleAuthClick:handleAuthClick,
+    handleSignoutClick:handleSignoutClick,
+    gapi_token_localstorage:gapi_token_localstorage,
+    check_token:check_token,
+    startProgress:startProgress
+
   }
 
 })();
