@@ -1598,7 +1598,7 @@ async function insertEvents(shiftSchedule){
       console.log(count);
       count +=1;
       updateProgressBar(count,shiftSchedule.length);
-    },800+delay);
+    },1000+delay);
     delay +=100;
     
     /*
