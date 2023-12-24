@@ -215,7 +215,7 @@ function handleAuthClick() {
     if (resp.error !== undefined) {
       throw (resp);
     }
-    document.getElementById('signout_button').style.display = 'block';
+    document.getElementById('signout_button').style.display = 'none';
     document.getElementById('exportTo').style.display = 'block';
     document.getElementById('shiftType').style.display = 'block';
     document.getElementById('authorize_button').style.display = 'none';
